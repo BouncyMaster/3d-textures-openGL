@@ -120,14 +120,18 @@ int main(void)
 
 	mat4 model, view;
 
-	glm_scale_make(model, (vec3){.5, .5, .5});
-	glm_rotate_x(model, glm_rad(20), model);
+	glm_rotate_make(model, glm_rad(20), (vec3){1, 0, 0});
 	glm_translate_make(view, (vec3){0, 0, -3});
 	glm_perspective_default(1, projection);
 
 	int modelLoc = glGetUniformLocation(shader_program, "model");
 	int viewLoc = glGetUniformLocation(shader_program, "view");
 	int projectionLoc = glGetUniformLocation(shader_program, "projection");
+
+	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (float *)model);
+	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, (float *)view);
+	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE,
+			(float *)projection);
 
 	glEnable(GL_DEPTH_TEST);
 	glClearColor(.2, .3, .3, 1);
@@ -148,7 +152,6 @@ int main(void)
 
 		glm_rotate_y(model, glm_rad((float)cos(glfwGetTime())), model);
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (float *)model);
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, (float *)view);
 		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE,
 				(float *)projection);
 
