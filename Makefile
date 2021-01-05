@@ -1,11 +1,15 @@
 LIBS = -lGL -lglfw -ldl -lm
 INCS = -Iexternal/glad/include -Iexternal/stb
-SRC = src/main.c src/file_ops.c external/glad/src/glad.c
+CFLAGS = -std=c99 -O2 -march=znver1 -Wall
 
-CFLAGS = -std=c99 -O2 -march=znver2 -Wall
+SRC_ROTATE = src/main_rotate.c src/file_ops.c external/glad/src/glad.c
+SRC_CAMERA = src/main_camera.c src/file_ops.c external/glad/src/glad.c
 
-3d-textures: $(SRC)
+rotate: $(SRC_ROTATE)
+	$(CC) -o $@ $^ $(INCS) $(LIBS) $(CFLAGS)
+
+camera: $(SRC_CAMERA)
 	$(CC) -o $@ $^ $(INCS) $(LIBS) $(CFLAGS)
 
 clean:
-	rm -f 3d-textures
+	rm -f rotate camera

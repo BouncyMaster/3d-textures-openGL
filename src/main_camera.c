@@ -1,7 +1,6 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <cglm/cglm.h>
-#include <math.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -9,17 +8,23 @@
 #include "data.h"
 #include "file_ops.h"
 
-unsigned int VAO[2], VBO[2], shader_program, texture;
+unsigned int VAO[2], VBO[2], shader_program;
+int projection_loc;
 mat4 projection;
 
-void framebuffer_size_callback(GLFWwindow* window, int w, int h)
+void
+framebuffer_size_callback(GLFWwindow* window, int w, int h)
 {
 	glViewport(0, 0, w, h);
 	glm_perspective_resize((float)w/(float)h, projection);
+	glUniformMatrix4fv(projection_loc, 1, GL_FALSE, (float *)projection);
 }
 
-void set_data(void)
+void
+set_data(void)
 {
+	glm_perspective_default(1, projection);
+
 	glGenVertexArrays(2, VAO);
 	glGenBuffers(2, VBO);
 
@@ -36,7 +41,6 @@ void set_data(void)
 			(void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
-
 	glBindVertexArray(VAO[1]);
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
@@ -51,6 +55,8 @@ void set_data(void)
 			(void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
+
+	unsigned int texture;
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
 	// set the texture wrapping parameters
@@ -79,11 +85,11 @@ void set_data(void)
 	unsigned int vertex_shader, fragment_shader;
 
 	vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertex_shader, 1, &vertex_shader_source, NULL);
+	glShaderSource(vertex_shader, 1, &vertex_shader_source, 0);
 	glCompileShader(vertex_shader);
 
 	fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragment_shader, 1, &fragment_shader_source, NULL);
+	glShaderSource(fragment_shader, 1, &fragment_shader_source, 0);
 	glCompileShader(fragment_shader);
 
 	shader_program = glCreateProgram();
@@ -95,10 +101,13 @@ void set_data(void)
 	glDeleteShader(fragment_shader);
 
 	glUseProgram(shader_program);
+
+	projection_loc = glGetUniformLocation(shader_program, "projection");
 }
 
 
-int main(void)
+int
+main(void)
 {
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -107,31 +116,38 @@ int main(void)
 	glfwWindowHint(GLFW_SAMPLES, 4);
 
 	GLFWwindow* window = glfwCreateWindow(800, 800,
-			"3d-textures", 0, 0);
+			"rotate", 0, 0);
 	glfwMakeContextCurrent(window);
 
 	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
-	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-
 	set_data();
 
-	char curr_show = 1, is_held = 0;
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 	mat4 model, view;
+	vec3 positions[] = {
+		{ 0.0,  0.0,  0.0},
+		{ 2.0,  5.0, -15.0},
+		{-1.5, -2.2, -2.5},
+		{-3.8, -2.0, -12.3},
+		{ 2.4, -0.4, -3.5},
+		{-1.7,  3.0, -7.5},
+		{ 1.3, -2.0, -2.5},
+		{ 1.5,  2.0, -2.5},
+		{ 1.5,  0.2, -1.5},
+		{-1.3,  1.0, -1.5}
+	};
 
-	glm_rotate_make(model, glm_rad(20), (vec3){1, 0, 0});
 	glm_translate_make(view, (vec3){0, 0, -3});
-	glm_perspective_default(1, projection);
 
-	int modelLoc = glGetUniformLocation(shader_program, "model");
-	int viewLoc = glGetUniformLocation(shader_program, "view");
-	int projectionLoc = glGetUniformLocation(shader_program, "projection");
+	int model_loc = glGetUniformLocation(shader_program, "model");
+	int view_loc = glGetUniformLocation(shader_program, "view");
+	unsigned char i;
+	bool curr_show = true, is_held = false;
 
-	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (float *)model);
-	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, (float *)view);
-	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE,
-			(float *)projection);
+	glUniformMatrix4fv(view_loc, 1, GL_FALSE, (float *)view);
+	glUniformMatrix4fv(projection_loc, 1, GL_FALSE, (float *)projection);
 
 	glEnable(GL_DEPTH_TEST);
 	glClearColor(.2, .3, .3, 1);
@@ -150,18 +166,22 @@ int main(void)
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		glm_rotate_y(model, glm_rad((float)cos(glfwGetTime())), model);
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (float *)model);
-		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE,
-				(float *)projection);
+		glBindVertexArray(VAO[curr_show]);
+		for (i = 0; i < sizeof(positions)/sizeof(vec3); ++i) {
+			glm_translate_make(model, positions[i]);
+			glm_rotate_y(model, cos(glfwGetTime()), model);
+			glm_rotate_x(model, glm_rad(20 * i), model);
+			glm_scale(model, (vec3){0.5, 0.5, 0.5});
 
-		if (curr_show) {
-			glBindVertexArray(VAO[0]);
-			glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-		} else {
-			glBindVertexArray(VAO[1]);
-			glDrawArrays(GL_TRIANGLES, 0, 6);
-			glDrawArrays(GL_TRIANGLE_STRIP, 6, 8);
+			glUniformMatrix4fv(model_loc, 1, GL_FALSE,
+				(float *)model);
+
+			if (curr_show) {
+				glDrawArrays(GL_TRIANGLES, 0, 6);
+				glDrawArrays(GL_TRIANGLE_STRIP, 6, 8);
+			} else {
+				glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+			}
 		}
 
 		glfwSwapBuffers(window);

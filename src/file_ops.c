@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-char *file_to_str(const char *file_path)
+char *
+file_to_str(const char *file_path)
 {
 	FILE *fp;
 	unsigned int length;
@@ -13,7 +14,8 @@ char *file_to_str(const char *file_path)
 		length = ftell(fp);
 		buffer = malloc(length + 1);
 		fseek(fp, 0, SEEK_SET);
-		fread(buffer, length, 1, fp);
+		if (fread(buffer, 1, length, fp) != length)
+			exit(1);
 		fclose(fp);
 
 		buffer[length] = '\0';
