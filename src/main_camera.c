@@ -7,43 +7,85 @@
 
 #include "data.h"
 #include "file_ops.h"
+#include "camera.h"
 
-unsigned int VAO[2], VBO[2], shader_program;
-int projection_loc;
-mat4 projection;
+unsigned int VAO, VBO, shader_program;
+
+short scr[2] = {800, 800};
+
+float delta_time, last_frame = 0;
+
+struct camera main_camera;
+
+float lastX = 400, lastY = 400; // scr_width / 2
+bool first_mouse = true, zoom_changed = true, scr_changed = true;
 
 void
-framebuffer_size_callback(GLFWwindow* window, int w, int h)
+framebuffer_size_callback(GLFWwindow *window, int w, int h)
 {
 	glViewport(0, 0, w, h);
-	glm_perspective_resize((float)w/(float)h, projection);
-	glUniformMatrix4fv(projection_loc, 1, GL_FALSE, (float *)projection);
+
+	scr_changed = true;
+
+	scr[0] = w;
+	scr[1] = h;
+}
+
+void
+keyboard_callback(GLFWwindow* window)
+{
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, true);
+
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		camera_process_keyboard(FORWARD, delta_time,
+				&main_camera);
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		camera_process_keyboard(BACKWARD, delta_time,
+				&main_camera);
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		camera_process_keyboard(LEFT, delta_time,
+				&main_camera);
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		camera_process_keyboard(RIGHT, delta_time,
+				&main_camera);
+}
+
+void
+mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+	if (first_mouse) {
+		lastX = xpos;
+		lastY = ypos;
+		first_mouse = false;
+	}
+
+	vec2 offset = {xpos - lastX, lastY - ypos};
+
+	lastX = xpos;
+	lastY = ypos;
+
+	camera_process_mouse(offset, &main_camera);
+}
+
+void
+scroll_callback(GLFWwindow* window, double offsetX, double offsetY)
+{
+	zoom_changed = true;
+	camera_process_mousescroll((short)offsetY, &main_camera);
 }
 
 void
 set_data(void)
 {
-	glm_perspective_default(1, projection);
+	camera_make_default((vec3){0, 0, 3}, (vec3){0, 1, 0}, &main_camera);
 
-	glGenVertexArrays(2, VAO);
-	glGenBuffers(2, VBO);
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
 
-	glBindVertexArray(VAO[0]);
+	glBindVertexArray(VAO);
 
-	glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(square), square, GL_STATIC_DRAW);
-
-	// position
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), 0);
-	glEnableVertexAttribArray(0);
-	// texture coord
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
-			(void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-
-	glBindVertexArray(VAO[1]);
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(triangle), triangle,
 			GL_STATIC_DRAW);
 
@@ -73,13 +115,13 @@ set_data(void)
 			&nr_channels, 0);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
-			GL_UNSIGNED_BYTE, data);
+		GL_UNSIGNED_BYTE, data);
 	glGenerateMipmap(GL_TEXTURE_2D);
 
 	stbi_image_free(data);
 
-	const char *vertex_shader_source = file_to_str("shaders/vertex.glsl");
-	const char *fragment_shader_source =
+	const char *vertex_shader_source = file_to_str("shaders/vertex.glsl"),
+		*fragment_shader_source =
 			file_to_str("shaders/fragment.glsl");
 
 	unsigned int vertex_shader, fragment_shader;
@@ -101,8 +143,6 @@ set_data(void)
 	glDeleteShader(fragment_shader);
 
 	glUseProgram(shader_program);
-
-	projection_loc = glGetUniformLocation(shader_program, "projection");
 }
 
 
@@ -115,8 +155,8 @@ main(void)
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_SAMPLES, 4);
 
-	GLFWwindow* window = glfwCreateWindow(800, 800,
-			"rotate", 0, 0);
+	GLFWwindow* window = glfwCreateWindow(scr[0], scr[1],
+			"camera", 0, 0);
 	glfwMakeContextCurrent(window);
 
 	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
@@ -124,72 +164,59 @@ main(void)
 	set_data();
 
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	glfwSetCursorPosCallback(window, mouse_callback);
+	glfwSetScrollCallback(window, scroll_callback);
 
-	mat4 model, view;
-	vec3 positions[] = {
-		{ 0.0,  0.0,  0.0},
-		{ 2.0,  5.0, -15.0},
-		{-1.5, -2.2, -2.5},
-		{-3.8, -2.0, -12.3},
-		{ 2.4, -0.4, -3.5},
-		{-1.7,  3.0, -7.5},
-		{ 1.3, -2.0, -2.5},
-		{ 1.5,  2.0, -2.5},
-		{ 1.5,  0.2, -1.5},
-		{-1.3,  1.0, -1.5}
-	};
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-	glm_translate_make(view, (vec3){0, 0, -3});
+	mat4 model, view, projection;
+	glm_scale_make(model, (vec3){.5, .5, .5});
+	glm_rotate_y(model, glm_rad(35), model);
 
 	int model_loc = glGetUniformLocation(shader_program, "model");
 	int view_loc = glGetUniformLocation(shader_program, "view");
-	unsigned char i;
-	bool curr_show = true, is_held = false;
+	int projection_loc = glGetUniformLocation(shader_program, "projection");
 
-	glUniformMatrix4fv(view_loc, 1, GL_FALSE, (float *)view);
-	glUniformMatrix4fv(projection_loc, 1, GL_FALSE, (float *)projection);
+	glUniformMatrix4fv(model_loc, 1, GL_FALSE, (float *)model);
 
 	glEnable(GL_DEPTH_TEST);
 	glClearColor(.2, .3, .3, 1);
 
-	while(!glfwWindowShouldClose(window)) {
-		if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-			glfwSetWindowShouldClose(window, 1);
+	float current_frame;
+	while (!glfwWindowShouldClose(window)) {
+		keyboard_callback(window);
 
-		if((glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS) &&
-				!is_held) {
-			is_held = 1;
-			curr_show = !curr_show;
-		} else if((glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_RELEASE)
-				&& is_held)
-			is_held = 0;
+		current_frame = glfwGetTime();
+		delta_time = current_frame - last_frame;
+		last_frame = current_frame;
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		glBindVertexArray(VAO[curr_show]);
-		for (i = 0; i < sizeof(positions)/sizeof(vec3); ++i) {
-			glm_translate_make(model, positions[i]);
-			glm_rotate_y(model, cos(glfwGetTime()), model);
-			glm_rotate_x(model, glm_rad(20 * i), model);
-			glm_scale(model, (vec3){0.5, 0.5, 0.5});
+		if (scr_changed || zoom_changed) {
+			scr_changed = false;
+			zoom_changed = false;
 
-			glUniformMatrix4fv(model_loc, 1, GL_FALSE,
-				(float *)model);
-
-			if (curr_show) {
-				glDrawArrays(GL_TRIANGLES, 0, 6);
-				glDrawArrays(GL_TRIANGLE_STRIP, 6, 8);
-			} else {
-				glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-			}
+			glm_perspective(glm_rad(main_camera.zoom),
+				(float)scr[0]/(float)scr[1], .1, 100, projection);
+			glUniformMatrix4fv(projection_loc, 1, GL_FALSE,
+				(float *)projection);
 		}
+
+		camera_getviewmatrix(main_camera, view);
+		glUniformMatrix4fv(view_loc, 1, GL_FALSE,
+			(float *)view);
+
+		glBindVertexArray(VAO);
+
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glDrawArrays(GL_TRIANGLE_STRIP, 6, 8);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 
-	glDeleteVertexArrays(2, VAO);
-	glDeleteBuffers(2, VBO);
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteBuffers(1, &VBO);
 	glDeleteProgram(shader_program);
 
 	glfwTerminate();
