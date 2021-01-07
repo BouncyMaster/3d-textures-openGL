@@ -169,9 +169,20 @@ main(void)
 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
+	vec3 positions[] = {
+		{ 0.0,  0.0,  0.0},
+		{ 2.0,  5.0, -15.0},
+		{-1.5, -2.2, -2.5},
+		{-3.8, -2.0, -12.3},
+		{ 2.4, -0.4, -3.5},
+		{-1.7,  3.0, -7.5},
+		{ 1.3, -2.0, -2.5},
+		{ 1.5,  2.0, -2.5},
+		{ 1.5,  0.2, -1.5},
+		{-1.3,  1.0, -1.5}
+	};
+
 	mat4 model, view, projection;
-	glm_scale_make(model, (vec3){.5, .5, .5});
-	glm_rotate_y(model, glm_rad(35), model);
 
 	int model_loc = glGetUniformLocation(shader_program, "model");
 	int view_loc = glGetUniformLocation(shader_program, "view");
@@ -206,10 +217,17 @@ main(void)
 		glUniformMatrix4fv(view_loc, 1, GL_FALSE,
 			(float *)view);
 
-		glBindVertexArray(VAO);
+		for (short i = 0; i < sizeof(positions)/sizeof(vec3); ++i) {
+			glm_translate_make(model, positions[i]);
+			glm_rotate_y(model, cos(current_frame), model);
+			glm_rotate_x(model, glm_rad(20 * i), model);
 
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-		glDrawArrays(GL_TRIANGLE_STRIP, 6, 8);
+			glUniformMatrix4fv(model_loc, 1, GL_FALSE,
+				(float *)model);
+
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+			glDrawArrays(GL_TRIANGLE_STRIP, 6, 8);
+		}
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

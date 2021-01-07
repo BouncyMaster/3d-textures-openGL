@@ -6,7 +6,7 @@
 // default camera values
 #define YAW -90.
 #define PITCH 0.
-#define SPEED 2.5
+#define SPEED 5.
 #define SENSITIVITY .1
 #define ZOOM 45
 
