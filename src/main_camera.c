@@ -18,14 +18,14 @@ float delta_time, last_frame = 0;
 struct camera main_camera;
 
 float lastX = 400, lastY = 400; // scr_width / 2
-bool first_mouse = true, zoom_changed = true, scr_changed = true;
+bool first_mouse = true, perspective_changed = true;
 
 void
 framebuffer_size_callback(GLFWwindow *window, int w, int h)
 {
 	glViewport(0, 0, w, h);
 
-	scr_changed = true;
+	perspective_changed = true;
 
 	scr[0] = w;
 	scr[1] = h;
@@ -71,7 +71,7 @@ mouse_callback(GLFWwindow* window, double xpos, double ypos)
 void
 scroll_callback(GLFWwindow* window, double offsetX, double offsetY)
 {
-	zoom_changed = true;
+	perspective_changed = true;
 	camera_process_mousescroll((short)offsetY, &main_camera);
 }
 
@@ -203,9 +203,8 @@ main(void)
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		if (scr_changed || zoom_changed) {
-			scr_changed = false;
-			zoom_changed = false;
+		if (perspective_changed) {
+			perspective_changed = false;
 
 			glm_perspective(glm_rad(main_camera.zoom),
 				(float)scr[0]/(float)scr[1], .1, 100, projection);
