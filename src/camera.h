@@ -35,7 +35,7 @@ struct camera {
 };
 
 void camera_init(vec3 position, vec3 up, struct camera *dest);
-void camera_getviewmatrix(mat4 out, struct camera cam);
+void camera_getviewmatrix(mat4 out, struct camera *cam);
 void camera_process_keyboard(enum camera_movement direction, float delta_time,
 	struct camera *cam);
 void camera_process_mouse(vec2 offset, struct camera *cam);

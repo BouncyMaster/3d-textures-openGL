@@ -32,11 +32,11 @@ camera_init(vec3 position, vec3 up, struct camera *dest)
 }
 
 void
-camera_getviewmatrix(mat4 out, struct camera cam)
+camera_getviewmatrix(mat4 out, struct camera *cam)
 {
 	vec3 center;
-	glm_vec3_add(cam.position, cam.front, center);
-	glm_lookat(cam.position, center, cam.up, out);
+	glm_vec3_add(cam->position, cam->front, center);
+	glm_lookat(cam->position, center, cam->up, out);
 }
 
 void
