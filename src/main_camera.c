@@ -212,7 +212,7 @@ main(void)
 				(float *)projection);
 		}
 
-		camera_getviewmatrix(main_camera, view);
+		camera_getviewmatrix(view, main_camera);
 		glUniformMatrix4fv(view_loc, 1, GL_FALSE,
 			(float *)view);
 
