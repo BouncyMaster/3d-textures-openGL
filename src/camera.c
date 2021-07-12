@@ -17,7 +17,7 @@ camera_updatevectors(struct camera *cam)
 }
 
 void
-camera_make_default(vec3 position, vec3 up, struct camera *dest)
+camera_init(vec3 position, vec3 up, struct camera *dest)
 {
 	glm_vec3_copy(position, dest->position);
 	glm_vec3_copy(up, dest->world_up);

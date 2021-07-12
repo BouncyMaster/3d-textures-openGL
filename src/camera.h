@@ -34,7 +34,7 @@ struct camera {
 	short zoom;
 };
 
-void camera_make_default(vec3 position, vec3 up, struct camera *dest);
+void camera_init(vec3 position, vec3 up, struct camera *dest);
 void camera_getviewmatrix(struct camera cam, mat4 out);
 void camera_process_keyboard(enum camera_movement direction, float delta_time,
 	struct camera *cam);

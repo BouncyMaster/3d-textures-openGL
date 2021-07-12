@@ -78,7 +78,7 @@ scroll_callback(GLFWwindow* window, double offsetX, double offsetY)
 void
 set_data(void)
 {
-	camera_make_default((vec3){0, 0, 3}, (vec3){0, 1, 0}, &main_camera);
+	camera_init((vec3){0, 0, 3}, (vec3){0, 1, 0}, &main_camera);
 
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
