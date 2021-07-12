@@ -1,7 +1,8 @@
 #include "camera.h"
 #include <math.h>
 
-void camera_updatevectors(struct camera *cam)
+void
+camera_updatevectors(struct camera *cam)
 {
 	vec3 front;
 	// calculate the new front vector
@@ -9,6 +10,7 @@ void camera_updatevectors(struct camera *cam)
 	front[1] = sin(glm_rad(cam->pitch));
 	front[2] = sin(glm_rad(cam->yaw)) * cos(glm_rad(cam->pitch));
 	glm_vec3_copy(front, cam->front);
+
 	// also re-calculate the right and up vector
 	glm_vec3_crossn(cam->front, cam->world_up, cam->right);
 	glm_vec3_crossn(cam->right, cam->front, cam->up);
