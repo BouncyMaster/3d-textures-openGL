@@ -188,8 +188,6 @@ main(void)
 	int view_loc = glGetUniformLocation(shader_program, "view");
 	int projection_loc = glGetUniformLocation(shader_program, "projection");
 
-	glUniformMatrix4fv(model_loc, 1, GL_FALSE, (float *)model);
-
 	glEnable(GL_DEPTH_TEST);
 	glClearColor(.2, .3, .3, 1);
 
