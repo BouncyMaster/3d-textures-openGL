@@ -1,5 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include "file_ops.h"
 
 char *
 file_to_str(const char *file_path)
