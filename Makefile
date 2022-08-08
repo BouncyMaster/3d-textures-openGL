@@ -11,7 +11,7 @@ rotate: $(SRC_ROTATE)
 camera: $(SRC_CAMERA)
 	$(CC) -o $@ $^ $(INCS) $(LIBS) $(CFLAGS)
 
-gentags:
+tags:
 	ctags `find src -name "*.c"`
 
 clean:
