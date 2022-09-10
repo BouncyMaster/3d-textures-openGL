@@ -184,11 +184,9 @@ main(void)
 		{-1.3,  1.0, -1.5}
 	};
 
-	mat4 model, view, projection;
+	mat4 projection, model, view, pv, pvm;
 
-	int model_loc = glGetUniformLocation(shader_program, "model");
-	int view_loc = glGetUniformLocation(shader_program, "view");
-	int projection_loc = glGetUniformLocation(shader_program, "projection");
+	int pvm_loc = glGetUniformLocation(shader_program, "pvm");
 
 	glEnable(GL_DEPTH_TEST);
 	glClearColor(.2, .3, .3, 1);
@@ -208,21 +206,19 @@ main(void)
 
 			glm_perspective(glm_rad(main_camera.zoom),
 				(float)scr[0]/(float)scr[1], .1, 100, projection);
-			glUniformMatrix4fv(projection_loc, 1, GL_FALSE,
-				(float *)projection);
 		}
 
 		camera_getviewmatrix(view, &main_camera);
-		glUniformMatrix4fv(view_loc, 1, GL_FALSE,
-			(float *)view);
+		glm_mat4_mul(projection, view, pv);
 
 		for (short i = 0; i < sizeof(positions)/sizeof(vec3); ++i) {
 			glm_translate_make(model, positions[i]);
-			glm_rotate_y(model, cos(current_frame), model);
+			glm_rotate_y(model, sin(current_frame), model);
 			glm_rotate_x(model, glm_rad(20 * i), model);
 
-			glUniformMatrix4fv(model_loc, 1, GL_FALSE,
-				(float *)model);
+			glm_mat4_mul(pv, model, pvm);
+			glUniformMatrix4fv(pvm_loc, 1, GL_FALSE,
+				(float *)pvm);
 
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 			glDrawArrays(GL_TRIANGLE_STRIP, 6, 8);
