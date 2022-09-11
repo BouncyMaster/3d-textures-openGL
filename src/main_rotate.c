@@ -5,8 +5,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+#include <file_ops.h>
 #include "data.h"
-#include "file_ops.h"
 
 unsigned int VAO[2], VBO[2], shader_program;
 int projection_loc;

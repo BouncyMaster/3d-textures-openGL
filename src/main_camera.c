@@ -5,8 +5,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+#include <file_ops.h>
 #include "data.h"
-#include "file_ops.h"
 #include "camera.h"
 
 unsigned int VAO, VBO, shader_program;
